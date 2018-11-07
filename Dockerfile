@@ -1,35 +1,25 @@
-FROM ubuntu:latest
+FROM kyleehee/melt:latest
 
 # Install deps
 RUN apt-get update && \
-apt install -yq build-essential wget pkg-config dumb-init unzip \
-libjpeg-dev libpng-dev libtiff-dev xml2 libx264-dev \
-frei0r-plugins frei0r-plugins-dev \
-libgtk2.0-common libgtk2.0-dev libexif-dev \
-libmovit-dev libebur128-dev libsdl2-dev libsox-dev
+apt install -yq qt5-default libqt5webkit5-dev xvfb
 
 WORKDIR /tmp/build
-ENV LANG="C.UTF-8"
-ENV LD_LIBRARY_PATH="/usr/local/lib:/usr/lib"
 
-# Install nasm which is required by ffmpeg
-RUN wget -nv https://www.nasm.us/pub/nasm/releasebuilds/2.13.03/nasm-2.13.03.tar.bz2 && \
-tar -xf nasm-2.13.03.tar.bz2 && cd nasm-2.13.03 && \
-./configure && make -j2 && make install
-
-# Install ffmpeg
-RUN wget -nv https://www.ffmpeg.org/releases/ffmpeg-snapshot.tar.bz2 && \
-tar -xf ffmpeg-snapshot.tar.bz2 && cd ffmpeg && \
-./configure --enable-shared --enable-gpl --enable-libx264 && make -j2 && make install
-
-# Install mltframework
 RUN wget -nv https://github.com/mltframework/mlt/archive/master.zip -O mlt-source.zip && \
-unzip mlt-source.zip -d mlt-source && cd mlt-source/mlt-master && \
-./configure && make -j2 && make install
+unzip mlt-source.zip -d mlt-source
 
-RUN apt-get clean && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* rm -rf /tmp/build/*
+# Install webvfx for mlt
+RUN wget -nv https://github.com/mltframework/webvfx/archive/master.zip -O webvfx-source.zip && \
+unzip webvfx-source.zip -d webvfx-source && cd webvfx-source/webvfx-master && \
+qmake -r PREFIX=/usr/local MLT_SOURCE=/tmp/build/mlt-source/mlt-master && make && make install
 
-# Create app directory
-# WORKDIR /usr/src/app
+RUN apt-get clean && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* && rm -rf /tmp/build/*
 
-ENTRYPOINT ["dumb-init", "--", "melt"]
+WORKDIR /usr/src/app
+COPY start.sh .
+RUN chmod a+x start.sh
+ENV DISPLAY :99
+
+ENTRYPOINT ["dumb-init", "--", "/usr/src/app/start.sh"]
+CMD ["dumb-init", "--", "/usr/src/app/start.sh"]
