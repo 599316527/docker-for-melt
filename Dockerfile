@@ -23,8 +23,8 @@ tar -xf ffmpeg-snapshot.tar.bz2 && cd ffmpeg && \
 ./configure --enable-shared --enable-gpl --enable-libx264 && make -j2 && make install
 
 # Install mltframework
-RUN wget -nv https://github.com/mltframework/mlt/archive/master.zip -O mlt-source.zip && \
-unzip mlt-source.zip -d mlt-source && cd mlt-source/mlt-master && \
+RUN wget -nv https://github.com/mltframework/mlt/releases/download/v6.10.0/mlt-6.10.0.tar.gz && \
+tar -xf mlt-6.10.0.tar.gz && cd mlt-6.10.0 && \
 ./configure && make -j2 && make install
 
 RUN apt-get clean && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* rm -rf /tmp/build/*
